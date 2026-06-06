@@ -825,80 +825,100 @@
     }
 
     buildCards();
+  buildCards();
 
-    // 鼠标跟随光晕
-    const glow = document.getElementById('mouseGlow');
-    document.addEventListener('mousemove', (e) => {
-        if (glow) {
-            glow.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
-        }
-    });
+// ========== 保存和恢复滚动位置 ==========
+// 页面加载时恢复滚动位置
+(function restoreScrollPosition() {
+    const savedScrollPos = sessionStorage.getItem('portfolioScrollPosition');
+    if (savedScrollPos !== null) {
+        setTimeout(() => {
+            window.scrollTo({
+                top: parseInt(savedScrollPos),
+                behavior: 'instant'
+            });
+            sessionStorage.removeItem('portfolioScrollPosition');
+        }, 50);
+    }
+})();
+
+// 鼠标跟随光晕
+const glow = document.getElementById('mouseGlow');
+document.addEventListener('mousemove', (e) => {
+    if (glow) {
+        glow.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+    }
+});
+
 </script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <script>
-    // 点击卡片跳转详情页
-    document.querySelectorAll('.card').forEach((card, index) => {
-        card.style.cursor = 'pointer';
-        card.addEventListener('click', (e) => {
-            if (e.target.closest('.video-badge')) return;
-            
-            // 获取对应的作品数据
-            let currentItem = null;
-            let itemIndex = 0;
-            for (let i = 0; i < portfolioItems.length; i++) {
-                const item = portfolioItems[i];
-                if (item.type === 'section') continue;
-                if (itemIndex === index) {
-                    currentItem = item;
-                    break;
-                }
-                itemIndex++;
+// 点击卡片跳转详情页
+document.querySelectorAll('.card').forEach((card, index) => {
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', (e) => {
+        if (e.target.closest('.video-badge')) return;
+        
+        // 保存当前滚动位置
+        sessionStorage.setItem('portfolioScrollPosition', window.scrollY);
+        
+        // 获取对应的作品数据
+        let currentItem = null;
+        let itemIndex = 0;
+        for (let i = 0; i < portfolioItems.length; i++) {
+            const item = portfolioItems[i];
+            if (item.type === 'section') continue;
+            if (itemIndex === index) {
+                currentItem = item;
+                break;
             }
+            itemIndex++;
+        }
+        
+        let images = [];
+        let title = '';
+        let desc = '';
+        
+        if (currentItem) {
+            title = currentItem.title || '作品详情';
+            desc = currentItem.description || '';
             
-            let images = [];
-            let title = '';
-            let desc = '';
-            
-            if (currentItem) {
-                title = currentItem.title || '作品详情';
-                desc = currentItem.description || '';
-                
-                // 优先使用 detailImages
-                if (currentItem.detailImages && currentItem.detailImages.length >= 3) {
-                    images = currentItem.detailImages.slice(0, 3);
-                } else {
-                    // 否则从卡片中提取
-                    const defaultImg = card.querySelector('.default-img')?.src;
-                    const hoverImg = card.querySelector('.hover-img')?.src;
-                    const posterImg = card.querySelector('.poster-img')?.src;
-                    
-                    if (defaultImg) images.push(defaultImg);
-                    if (hoverImg) images.push(hoverImg);
-                    if (posterImg && !defaultImg) images.push(posterImg);
-                    
-                    const mainImg = card.querySelector('img')?.src;
-                    if (images.length === 0 && mainImg) images.push(mainImg);
-                    while (images.length < 3) images.push(images[0]);
-                }
+            // 优先使用 detailImages
+            if (currentItem.detailImages && currentItem.detailImages.length >= 3) {
+                images = currentItem.detailImages.slice(0, 3);
             } else {
-                // 备用方案
-                title = card.querySelector('.card-title')?.innerText || '作品详情';
-                desc = card.querySelector('.card-desc')?.innerText || '';
+                // 否则从卡片中提取
                 const defaultImg = card.querySelector('.default-img')?.src;
                 const hoverImg = card.querySelector('.hover-img')?.src;
+                const posterImg = card.querySelector('.poster-img')?.src;
+                
                 if (defaultImg) images.push(defaultImg);
                 if (hoverImg) images.push(hoverImg);
-                while (images.length < 3) images.push(images[0] || '');
+                if (posterImg && !defaultImg) images.push(posterImg);
+                
+                const mainImg = card.querySelector('img')?.src;
+                if (images.length === 0 && mainImg) images.push(mainImg);
+                while (images.length < 3) images.push(images[0]);
             }
-            
-            const params = new URLSearchParams({
-                images: JSON.stringify(images.slice(0, 3)),
-                title: title,
-                desc: desc
-            });
-            window.location.href = `detail.html?${params.toString()}`;
+        } else {
+            // 备用方案
+            title = card.querySelector('.card-title')?.innerText || '作品详情';
+            desc = card.querySelector('.card-desc')?.innerText || '';
+            const defaultImg = card.querySelector('.default-img')?.src;
+            const hoverImg = card.querySelector('.hover-img')?.src;
+            if (defaultImg) images.push(defaultImg);
+            if (hoverImg) images.push(hoverImg);
+            while (images.length < 3) images.push(images[0] || '');
+        }
+        
+        const params = new URLSearchParams({
+            images: JSON.stringify(images.slice(0, 3)),
+            title: title,
+            desc: desc
         });
+        window.location.href = `detail.html?${params.toString()}`;
     });
+});
 </script>
 </body>
 </html>
