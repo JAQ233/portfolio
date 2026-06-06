@@ -1,0 +1,442 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>作品详情 · 臻品鉴赏</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0c12;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            color: #f0f0f0;
+            overflow-x: hidden;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            z-index: 200;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(212,175,122,0.4);
+            padding: 10px 20px;
+            border-radius: 40px;
+            color: #d4af7a;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .back-btn:hover {
+            background: rgba(212,175,122,0.2);
+            border-color: #d4af7a;
+            transform: translateY(-2px);
+        }
+
+        .detail-header {
+            text-align: center;
+            padding: 2rem 1rem 1rem;
+        }
+        .detail-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            color: #d4af7a;
+        }
+        .detail-header p {
+            color: #a0a0b0;
+            max-width: 600px;
+            margin: 1rem auto 0;
+        }
+
+        .gallery-detail {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3rem;
+            padding: 2rem;
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: auto;
+        }
+
+        .detail-card {
+            width: 100%;
+            max-width: 380px;
+            transition: all 0.3s ease;
+            border-radius: 24px;
+            overflow: visible;
+            background: transparent;
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+        }
+
+        .image-container {
+            position: relative;
+            aspect-ratio: 4 / 3;
+            overflow: hidden;
+            border-radius: 24px;
+            background: rgba(18,20,28,0.6);
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(212,175,122,0.25);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.3);
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+
+        .hover-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.2s, opacity 0.2s;
+            pointer-events: none;
+        }
+        
+        .hover-overlay.active {
+            visibility: visible;
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .hover-image-box {
+            max-width: 85vw;
+            max-height: 85vh;
+            width: auto;
+            height: auto;
+            background: rgba(20, 22, 30, 0.95);
+            border-radius: 28px;
+            padding: 8px;
+            box-shadow: 0 30px 50px rgba(0,0,0,0.6);
+            border: 2px solid rgba(212,175,122,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeInUp 0.25s ease-out;
+            cursor: default;
+            transform: scale(1.25);
+            transform-origin: center center;
+        }
+        
+        .hover-image-box img {
+            max-width: 100%;
+            max-height: 75vh;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 20px;
+            display: block;
+            cursor: pointer;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: scale(1.15) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1.25) translateY(0);
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .hover-image-box { transform: scale(1.15); }
+            .gallery-detail { gap: 2rem; }
+        }
+        
+        @media (max-width: 600px) {
+            .hover-image-box { transform: scale(1.0); }
+            .gallery-detail { gap: 1.5rem; }
+            .detail-card { max-width: 320px; }
+        }
+        
+        body.hover-active { overflow: hidden; }
+        
+        .fullscreen-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.96);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.3s, opacity 0.3s;
+            cursor: pointer;
+        }
+
+        .fullscreen-modal.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .fullscreen-modal img {
+            max-width: 95vw;
+            max-height: 95vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 24px;
+            right: 32px;
+            font-size: 2.5rem;
+            color: #d4af7a;
+            cursor: pointer;
+            z-index: 2001;
+        }
+        
+        .close-hover {
+            position: absolute;
+            top: 24px;
+            right: 32px;
+            font-size: 2rem;
+            color: #d4af7a;
+            cursor: pointer;
+            z-index: 1010;
+            background: rgba(0,0,0,0.5);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .info-tip {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #7a7e8c;
+            margin: 0.5rem auto 1rem;
+            padding: 6px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 100px;
+            display: inline-block;
+        }
+        .control-wrap { text-align: center; }
+    </style>
+</head>
+<body>
+
+<a href="javascript:history.back()" class="back-btn">
+    <i class="fas fa-arrow-left"></i> 返回作品集
+</a>
+
+<div class="detail-header" id="detailHeader">
+    <h1 id="detailTitle">作品详情</h1>
+    <p id="detailDesc">加载中...</p>
+</div>
+
+<div class="control-wrap">
+    <div class="info-tip">
+        <i class="fas fa-mouse-pointer"></i> 鼠标悬停图片 → 图片放大1.25倍并居中 | 鼠标可在图框内自由移动
+    </div>
+</div>
+
+<div class="gallery-detail" id="galleryDetail"></div>
+
+<div class="hover-overlay" id="hoverOverlay">
+    <div class="close-hover" id="closeHoverBtn"><i class="fas fa-times"></i></div>
+    <div class="hover-image-box" id="hoverImageBox">
+        <img id="hoverImg" src="" alt="预览图">
+    </div>
+</div>
+
+<div class="fullscreen-modal" id="fullscreenModal">
+    <span class="close-modal">&times;</span>
+    <img id="fullscreenImg" src="" alt="">
+</div>
+
+<script>
+    // ============================================================
+    // 从 URL 参数获取图片路径（支持绝对路径）
+    // ============================================================
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    let images = [];
+    let title = "作品详情";
+    let desc = "";
+    
+    try {
+        const imagesStr = urlParams.get('images');
+        if (imagesStr) {
+            images = JSON.parse(decodeURIComponent(imagesStr));
+            console.log("接收到的图片路径:", images);
+        }
+    } catch(e) { 
+        console.log("解析图片参数失败:", e); 
+    }
+    
+    title = urlParams.get('title') || "作品详情";
+    desc = urlParams.get('desc') || "";
+    
+    document.getElementById('detailTitle').innerText = title;
+    document.getElementById('detailDesc').innerText = desc || "鼠标悬停图片可放大查看细节";
+    
+    // 确保有3张图片，不足则用第一张补充
+    while (images.length < 3) {
+        images.push(images[0] || "");
+    }
+    images = images.slice(0, 3);
+    
+    console.log("最终使用的图片:", images);
+    
+    // ============================================================
+    // 渲染画廊
+    // ============================================================
+    const galleryContainer = document.getElementById('galleryDetail');
+    const modal = document.getElementById('fullscreenModal');
+    const modalImg = document.getElementById('fullscreenImg');
+    const closeModal = document.querySelector('.close-modal');
+    
+    const hoverOverlay = document.getElementById('hoverOverlay');
+    const hoverImg = document.getElementById('hoverImg');
+    const closeHoverBtn = document.getElementById('closeHoverBtn');
+    const hoverImageBox = document.getElementById('hoverImageBox');
+    
+    let activeHoverCard = null;
+    let hoverTimer = null;
+    let isHoveringOverlay = false;
+    
+    function showHoverImage(imgSrc, sourceCard) {
+        if (hoverTimer) clearTimeout(hoverTimer);
+        activeHoverCard = sourceCard;
+        hoverImg.src = imgSrc;
+        hoverOverlay.classList.add('active');
+        document.body.classList.add('hover-active');
+    }
+    
+    function hideHoverImage(immediate = false) {
+        if (hoverTimer) clearTimeout(hoverTimer);
+        const doHide = () => {
+            if (!hoverOverlay.classList.contains('active')) return;
+            if (isHoveringOverlay) return;
+            hoverOverlay.classList.remove('active');
+            document.body.classList.remove('hover-active');
+            activeHoverCard = null;
+            setTimeout(() => {
+                if (!hoverOverlay.classList.contains('active')) hoverImg.src = '';
+            }, 200);
+        };
+        if (immediate) doHide();
+        else hoverTimer = setTimeout(doHide, 80);
+    }
+    
+    function forceHideHoverImage() {
+        if (hoverTimer) clearTimeout(hoverTimer);
+        isHoveringOverlay = false;
+        hoverOverlay.classList.remove('active');
+        document.body.classList.remove('hover-active');
+        activeHoverCard = null;
+        hoverImg.src = '';
+    }
+    
+    function renderGallery() {
+        galleryContainer.innerHTML = '';
+        for (let i = 0; i < images.length; i++) {
+            const imgSrc = images[i];
+            if (!imgSrc || imgSrc === "") continue;
+            
+            const card = document.createElement('div');
+            card.className = 'detail-card';
+            card.innerHTML = `<div class="image-container"><img src="${imgSrc}" alt="作品图${i+1}" loading="lazy"></div>`;
+            const imgElement = card.querySelector('img');
+            
+            card.addEventListener('mouseenter', (e) => {
+                e.stopPropagation();
+                if (hoverTimer) clearTimeout(hoverTimer);
+                showHoverImage(imgSrc, card);
+            });
+            card.addEventListener('mouseleave', () => {
+                if (activeHoverCard === card) hideHoverImage(false);
+            });
+            imgElement.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (hoverOverlay.classList.contains('active')) forceHideHoverImage();
+                modalImg.src = imgSrc;
+                modal.classList.add('active');
+            });
+            card.addEventListener('click', (e) => {
+                if(e.target === imgElement) return;
+                if (hoverOverlay.classList.contains('active')) forceHideHoverImage();
+                modalImg.src = imgSrc;
+                modal.classList.add('active');
+            });
+            galleryContainer.appendChild(card);
+        }
+    }
+    
+    hoverImageBox.addEventListener('mouseenter', () => {
+        isHoveringOverlay = true;
+        if (hoverTimer) clearTimeout(hoverTimer);
+    });
+    hoverImageBox.addEventListener('mouseleave', () => {
+        isHoveringOverlay = false;
+        if (activeHoverCard) hideHoverImage(false);
+        else forceHideHoverImage();
+    });
+    closeHoverBtn.addEventListener('click', (e) => { e.stopPropagation(); forceHideHoverImage(); });
+    hoverOverlay.addEventListener('click', (e) => { if (e.target === hoverOverlay) forceHideHoverImage(); });
+    hoverImg.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const currentImgSrc = hoverImg.src;
+        if (currentImgSrc && activeHoverCard) {
+            forceHideHoverImage();
+            modalImg.src = currentImgSrc;
+            modal.classList.add('active');
+        }
+    });
+    
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (hoverOverlay.classList.contains('active')) forceHideHoverImage();
+            else if (modal.classList.contains('active')) modal.classList.remove('active');
+        }
+    });
+    closeModal.addEventListener('click', () => modal.classList.remove('active'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+    
+    renderGallery();
+    
+    console.log('✅ detail.html 已加载 | 图片路径:', images);
+</script>
+</body>
+</html>
